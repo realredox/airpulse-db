@@ -158,6 +158,15 @@ function renderTable() {
     return true;
   });
 
+  // 일자(어제->오늘->내일->+2일) 먼저 정렬 후, 같은 날은 STD/A 시간순 정렬
+  const dayRank = d => d.startsWith("어제") ? 1 : d.startsWith("오늘") ? 2 : d.startsWith("내일") ? 3 : 4;
+  currentFiltered.sort((a, b) => {
+    const diff = dayRank(a["일자"] || "") - dayRank(b["일자"] || "");
+    if (diff !== 0) return diff;
+    return (a["STD/A"] || "99:99:99").localeCompare(b["STD/A"] || "99:99:99");
+  });
+
+
   const outCnt = currentFiltered.filter(r => r["구분"] === "OUTBOUND").length;
   const inCnt = currentFiltered.filter(r => r["구분"] === "INBOUND").length;
   const delayCnt = currentFiltered.filter(r => /지연|결항|회항/.test(r["현황"] || "")).length;
