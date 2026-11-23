@@ -5,31 +5,21 @@ import requests
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-# GitHub Secrets 금고에서 안전하게 API 키를 불러옴 (코드에 키 노출 없음)
 API_KEY = os.environ.get("ICN_API_KEY")
 
-DOMAIN = "apis.data.go.kr"
-BASE_URL = f"http://{DOMAIN}/B551177/statusOfAllFltDeOdp"
-ENDPOINT_ARR = f"{BASE_URL}/getFltArrivalsDeOdp"
-ENDPOINT_DEP = f"{BASE_URL}/getFltDeparturesDeOdp"
+HOST = "apis." + "data.go.kr"
+SERVICE_PATH = "B551177/statusOfAllFltDeOdp"
+ENDPOINT_ARR = f"http://{HOST}/{SERVICE_PATH}/getFltArrivalsDeOdp"
+ENDPOINT_DEP = f"http://{HOST}/{SERVICE_PATH}/getFltDeparturesDeOdp"
 
 def get_date_range():
-    # 한국 시간(KST) 기준 -1일 ~ +3일 계산
     kst_now = datetime.utcnow() + timedelta(hours=9)
     dates = []
-    for offset in range(-1, 3):
+    for offset in range(-1, 3):  # -1일 ~ +2일 (총 4일)
         target = kst_now + timedelta(days=offset)
         ymd = target.strftime("%Y%m%d")
         md = target.strftime("%m/%d")
-        if offset == -1:
-            label = f"어제({md})"
-        elif offset == 0:
-            label = f"오늘({md})"
-        elif offset == 1:
-            label = f"내일({md})"
-        else:
-            label = f"+{offset}일({md})"
+        label = f"어제({md})" if offset == -1 else (f"오늘({md})" if offset == 0 else (f"내일({md})" if offset == 1 else f"+{offset}일({md})"))
         dates.append((ymd, label))
     return dates
 
@@ -51,22 +41,16 @@ def fetch_and_save():
         for gubun, url in [("INBOUND", ENDPOINT_ARR), ("OUTBOUND", ENDPOINT_DEP)]:
             for poc_code, fixed_type in [("P", "여객"), ("C", "화물")]:
                 params = {
-                    "serviceKey": API_KEY,
-                    "searchDate": ymd,
-                    "passengerOrCargo": poc_code,
-                    "numOfRows": 2500,
-                    "pageNo": 1,
-                    "type": "json",
+                    "serviceKey": API_KEY, "searchDate": ymd,
+                    "passengerOrCargo": poc_code, "numOfRows": 2500, "pageNo": 1, "type": "json",
                 }
                 res = requests.get(url, params=params, headers=headers, timeout=20, verify=False)
                 res.raise_for_status()
                 data = res.json()
 
                 items = data.get("response", {}).get("body", {}).get("items", [])
-                if isinstance(items, dict):
-                    items = items.get("item", [])
-                if isinstance(items, dict):
-                    items = [items]
+                if isinstance(items, dict): items = items.get("item", [])
+                if isinstance(items, dict): items = [items]
 
                 for item in items:
                     cs_raw = str(item.get("codeshare") or "").strip()
@@ -81,41 +65,20 @@ def fetch_and_save():
 
                     remark_str = str(item.get("remark") or "").strip()
                     est_time = format_time(item.get("estimatedDatetime", ""))
-
-                    if remark_str in ["출발", "도착"]:
-                        etd_val, atd_val = "", est_time
-                    else:
-                        etd_val, atd_val = est_time, ""
+                    etd_val, atd_val = ("", est_time) if remark_str in ["출발", "도착"] else (est_time, "")
 
                     new_records.append({
-                        "일자": label,
-                        "항공사코드": airline_code,
-                        "항공사명": str(item.get("airline") or ""),
-                        "편명": flight_id,
-                        "구분": gubun,
-                        "여객/화물": fixed_type,
-                        "등록기호": str(item.get("aircraftRegNo") or ""),
-                        "기종": str(item.get("aircraftSubtype") or ""),
-                        "출발지": dep_ap,
-                        "도착지": arr_ap,
-                        "STD/A": format_time(item.get("scheduleDatetime", "")),
-                        "ETD/A": etd_val,
-                        "ATD/A": atd_val,
-                        "주기장": str(item.get("fstandPosition") or ""),
-                        "현황": remark_str,
-                        "_is_cs": is_cs,
+                        "일자": label, "항공사코드": airline_code, "항공사명": str(item.get("airline") or ""),
+                        "편명": flight_id, "구분": gubun, "여객/화물": fixed_type,
+                        "등록기호": str(item.get("aircraftRegNo") or ""), "기종": str(item.get("aircraftSubtype") or ""),
+                        "출발지": dep_ap, "도착지": arr_ap, "STD/A": format_time(item.get("scheduleDatetime", "")),
+                        "ETD/A": etd_val, "ATD/A": atd_val, "주기장": str(item.get("fstandPosition") or ""),
+                        "현황": remark_str, "_is_cs": is_cs,
                     })
 
     kst_now_str = (datetime.utcnow() + timedelta(hours=9)).strftime("%Y-%m-%d %H:%M:%S")
-    output_data = {
-        "updated_at": kst_now_str,
-        "total_count": len(new_records),
-        "records": new_records
-    }
-
     with open("flight_db.json", "w", encoding="utf-8") as f:
-        json.dump(output_data, f, ensure_ascii=False)
-
+        json.dump({"updated_at": kst_now_str, "total_count": len(new_records), "records": new_records}, f, ensure_ascii=False)
     print(f"[{kst_now_str}] 수집 완료: {len(new_records)}건")
 
 if __name__ == "__main__":
