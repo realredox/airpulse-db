@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AirPulse - 인천공항 운항 현황</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Malgun Gothic', -apple-system, sans-serif; background: #00205B; color: #1E293B; margin: 0; padding: 12px; }
+  .header { color: white; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+  .header h2 { margin: 0; font-size: 18px; }
+  .card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+  .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; align-items: center; }
+  .filter-item { display: flex; flex-direction: column; gap: 3px; }
+  .filter-item label { font-size: 11px; font-weight: bold; color: #475569; }
+  select, input[type="text"] { width: 100%; padding: 8px; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 13px; color: #00205B; background: #FFF; }
+  .airline-row { display: flex; gap: 4px; }
+  .btn-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; border-top: 1px solid #E2E8F0; padding-top: 10px; }
+  button { padding: 8px 12px; border: none; border-radius: 5px; font-size: 13px; font-weight: bold; cursor: pointer; }
+  .btn-primary { background: #0066A6; color: white; }
+  .btn-navy { background: #00205B; color: white; border: 1px solid #3B82F6; }
+  .btn-sub { background: #F1F5F9; color: #00205B; border: 1px solid #CBD5E1; }
+  .stats { font-weight: bold; color: #00205B; font-size: 13px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+  .table-wrap { overflow-x: auto; max-height: 62vh; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; white-space: nowrap; }
+  th { background: #00205B; color: white; position: sticky; top: 0; padding: 8px 6px; z-index: 1; }
+  td { padding: 7px 6px; border-bottom: 1px solid #E2E8F0; }
+  tr:hover { background: #F1F5F9; }
+  .delay { background: #FEE2E2 !important; color: #991B1B; font-weight: bold; }
+  .active { background: #E0F2FE !important; color: #075985; }
+  .modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; padding: 15px; }
+  .modal-box { background: white; border-radius: 8px; width: 100%; max-width: 400px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
+  .modal-head { background: #00205B; color: white; padding: 12px 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+  .modal-body { padding: 12px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .modal-foot { padding: 10px 12px; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h2>✈️ AirPulse - 인천공항 운항 현황</h2>
+  <button class="btn-navy" onclick="loadData()">📡 최신 DB 동기화</button>
+</div>
+<div class="card">
+  <div class="filter-grid">
+    <div class="filter-item"><label>일자 선택</label><select id="selDate" onchange="renderTable()"><option value="전체">전체</option></select></div>
+    <div class="filter-item"><label>항공사 코드</label><div class="airline-row"><input type="text" id="txtAirline" placeholder="예: KE, OZ" onkeyup="renderTable()"><button class="btn-sub" onclick="openAirlineModal()">☑️</button></div></div>
+    <div class="filter-item"><label>출/도착 구분</label><select id="selIO" onchange="renderTable()"><option value="전체">전체</option><option value="INBOUND">INBOUND</option><option value="OUTBOUND">OUTBOUND</option></select></div>
+    <div class="filter-item"><label>여객/화물</label><select id="selType" onchange="renderTable()"><option value="전체">전체</option><option value="여객">여객</option><option value="화물">화물</option></select></div>
+    <div class="filter-item"><label>편명 검색</label><input type="text" id="txtFlight" placeholder="예: KE123" onkeyup="renderTable()"></div>
+    <div class="filter-item"><label>공항코드</label><input type="text" id="txtAirport" placeholder="예: LAX, NRT" onkeyup="renderTable()"></div>
+    <div class="filter-item"><label>주기장</label><input type="text" id="txtStand" placeholder="예: 627, 101" onkeyup="renderTable()"></div>
+    <div class="filter-item"><label>시작 시간</label><select id="selStartTime" onchange="renderTable()"></select></div>
+    <div class="filter-item"><label>종료 시간</label><select id="selEndTime" onchange="renderTable()"></select></div>
+  </div>
+  <div class="btn-group">
+    <button class="btn-primary" onclick="renderTable()">🔍 조건 검색</button>
+    <button class="btn-sub" onclick="resetFilters()">🔄 초기화 (현재시각)</button>
+    <button class="btn-sub" onclick="exportCSV()">💾 엑셀(CSV) 저장</button>
+    <label style="font-size:13px; font-weight:bold; color:#00205B; margin-left:auto; display:flex; align-items:center; gap:4px; cursor:pointer;">
+      <input type="checkbox" id="chkCS" onchange="renderTable()"> 코드쉐어 포함
+    </label>
+  </div>
+</div>
+<div class="card stats">
+  <span id="statText">데이터를 불러오는 중입니다...</span>
+  <span id="updateText" style="color:#475569; font-weight:normal;"></span>
+</div>
+<div class="card table-wrap">
+  <table>
+    <thead>
+      <tr><th>일자</th><th>항공사</th><th>항공사명</th><th>편명</th><th>구분</th><th>유형</th><th>등록기호</th><th>기종</th><th>출발</th><th>도착</th><th>STD/A</th><th>ETD/A</th><th>ATD/A</th><th>주기장</th><th>현황</th></tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+<div class="modal-bg" id="airlineModal">
+  <div class="modal-box">
+    <div class="modal-head"><span>항공사 복수 선택</span><span style="cursor:pointer; font-size:18px;" onclick="closeAirlineModal()">✕</span></div>
+    <div style="padding:8px 12px; background:#F1F5F9; display:flex; gap:6px;">
+      <button class="btn-sub" style="padding:4px 8px; font-size:12px;" onclick="toggleAllAirlines(true)">전체 선택</button>
+      <button class="btn-sub" style="padding:4px 8px; font-size:12px;" onclick="toggleAllAirlines(false)">전체 해제</button>
+    </div>
+    <div class="modal-body" id="airlineList"></div>
+    <div class="modal-foot">
+      <button class="btn-primary" style="flex:1;" onclick="applyAirlineModal()">✔ 선택 완료</button>
+      <button class="btn-sub" onclick="closeAirlineModal()">취소</button>
+    </div>
+  </div>
+</div>
+<script>
+const HOST = "raw." + "githubusercontent.com";
+const PATH = "realredox/airpulse-db/main/flight_db.json";
+const DB_URL = `https://${HOST}/${PATH}`;
+let allRecords = [], currentFiltered = [];
+
+function initTimeSelects() {
+  const sSel = document.getElementById("selStartTime"), eSel = document.getElementById("selEndTime");
+  let sHtml = '<option value="00:00:00">00:00</option>', eHtml = '';
+  for (let h = 1; h < 24; h++) {
+    const hh = String(h).padStart(2, "0");
+    sHtml += `<option value="${hh}:00:00">${hh}:00</option>`;
+    eHtml += `<option value="${hh}:00:00">${hh}:00</option>`;
+  }
+  eHtml += '<option value="23:59:59" selected>23:59</option>';
+  sSel.innerHTML = sHtml; eSel.innerHTML = eHtml;
+}
+
+async function loadData() {
+  document.getElementById("statText").innerText = "최신 운항 데이터를 수신 중입니다...";
+  try {
+    const res = await fetch(DB_URL + "?t=" + Date.now());
+    const data = await res.json();
+    allRecords = data.records || [];
+    document.getElementById("updateText").innerText = "서버 수집 시각: " + (data.updated_at || "");
+    const dates = ["전체", ...new Set(allRecords.map(r => r["일자"]))];
+    const selDate = document.getElementById("selDate"), prev = selDate.value;
+    selDate.innerHTML = dates.map(d => `<option value="${d}">${d}</option>`).join("");
+    if (dates.includes(prev)) selDate.value = prev;
+    renderTable();
+  } catch (e) { document.getElementById("statText").innerText = "데이터 수신 실패: " + e.message; }
+}
+
+function resetFilters() {
+  const curHour = String(new Date().getHours()).padStart(2, "0") + ":00:00";
+  const selDate = document.getElementById("selDate");
+  const todayOpt = Array.from(selDate.options).find(opt => opt.value.startsWith("오늘"));
+  selDate.value = todayOpt ? todayOpt.value : "전체";
+  const sTimeSel = document.getElementById("selStartTime");
+  sTimeSel.value = Array.from(sTimeSel.options).some(opt => opt.value === curHour) ? curHour : "00:00:00";
+  document.getElementById("selEndTime").value = "23:59:59";
+  document.getElementById("txtAirline").value = ""; document.getElementById("selIO").value = "전체";
+  document.getElementById("selType").value = "전체"; document.getElementById("txtFlight").value = "";
+  document.getElementById("txtAirport").value = ""; document.getElementById("txtStand").value = "";
+  document.getElementById("chkCS").checked = false; renderTable();
+  document.querySelector(".table-wrap").scrollTop = 0;
+}
+function renderTable() {
+  const dVal = document.getElementById("selDate").value, ioVal = document.getElementById("selIO").value;
+  const tVal = document.getElementById("selType").value, sTime = document.getElementById("selStartTime").value;
+  const eTime = document.getElementById("selEndTime").value, incCS = document.getElementById("chkCS").checked;
+  const alRaw = document.getElementById("txtAirline").value.trim().toUpperCase();
+  const alList = alRaw ? alRaw.split(",").map(s => s.trim()).filter(Boolean) : [];
+  const fnVal = document.getElementById("txtFlight").value.trim().toUpperCase();
+  const apVal = document.getElementById("txtAirport").value.trim().toUpperCase();
+  const stVal = document.getElementById("txtStand").value.trim().toUpperCase();
+
+  currentFiltered = allRecords.filter(r => {
+    if (!incCS && r._is_cs) return false;
+    if (dVal !== "전체" && r["일자"] !== dVal) return false;
+    if (ioVal !== "전체" && r["구분"] !== ioVal) return false;
+    if (tVal !== "전체" && r["여객/화물"] !== tVal) return false;
+    const std = r["STD/A"] || "";
+    if (std && (std < sTime || std > eTime)) return false;
+    if (alList.length > 0 && !alList.includes((r["항공사코드"] || "").toUpperCase())) return false;
+    if (fnVal && !(r["편명"] || "").toUpperCase().includes(fnVal)) return false;
+    if (apVal && !(r["출발지"] || "").toUpperCase().includes(apVal) && !(r["도착지"] || "").toUpperCase().includes(apVal)) return false;
+    if (stVal && !(r["주기장"] || "").toUpperCase().includes(stVal)) return false;
+    return true;
+  });
+
+  const outCnt = currentFiltered.filter(r => r["구분"] === "OUTBOUND").length;
+  const inCnt = currentFiltered.filter(r => r["구분"] === "INBOUND").length;
+  const delayCnt = currentFiltered.filter(r => /지연|결항|회항/.test(r["현황"] || "")).length;
+  document.getElementById("statText").innerText = `총 검색: ${currentFiltered.length.toLocaleString()}편 | 출발: ${outCnt} | 도착: ${inCnt} | 지연/특이: ${delayCnt}`;
+
+  document.getElementById("tbody").innerHTML = currentFiltered.slice(0, 10000).map(r => {
+    const st = r["현황"] || "";
+    const cls = /지연|결항|회항/.test(st) ? "delay" : (/출발|도착/.test(st) ? "active" : "");
+    return `<tr class="${cls}"><td>${r["일자"]}</td><td>${r["항공사코드"]}</td><td>${r["항공사명"]}</td><td><b>${r["편명"]}</b></td><td>${r["구분"]}</td><td>${r["여객/화물"]}</td><td>${r["등록기호"]}</td><td>${r["기종"]}</td><td>${r["출발지"]}</td><td>${r["도착지"]}</td><td>${r["STD/A"]}</td><td>${r["ETD/A"]}</td><td>${r["ATD/A"]}</td><td><b>${r["주기장"]}</b></td><td>${st}</td></tr>`;
+  }).join("");
+}
+
+function openAirlineModal() {
+  const map = {}; allRecords.forEach(r => { const c = (r["항공사코드"] || "").trim().toUpperCase(); if (c && !map[c]) map[c] = r["항공사명"] || ""; });
+  const selected = new Set(document.getElementById("txtAirline").value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean));
+  document.getElementById("airlineList").innerHTML = Object.keys(map).sort().map(code => `<label style="font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" class="al-chk" value="${code}" ${selected.has(code) ? "checked" : ""}><b>[${code}]</b> ${map[code]}</label>`).join("");
+  document.getElementById("airlineModal").style.display = "flex";
+}
+function closeAirlineModal() { document.getElementById("airlineModal").style.display = "none"; }
+function toggleAllAirlines(flag) { document.querySelectorAll(".al-chk").forEach(cb => cb.checked = flag); }
+function applyAirlineModal() {
+  document.getElementById("txtAirline").value = Array.from(document.querySelectorAll(".al-chk:checked")).map(cb => cb.value).join(", ");
+  closeAirlineModal(); renderTable();
+}
+function exportCSV() {
+  if (!currentFiltered.length) return alert("저장할 데이터가 없습니다.");
+  const cols = ["일자","항공사코드","항공사명","편명","구분","여객/화물","등록기호","기종","출발지","도착지","STD/A","ETD/A","ATD/A","주기장","현황"];
+  const rows = [cols.join(","), ...currentFiltered.map(r => cols.map(c => `"${String(r[c] || "").replace(/"/g, '""')}"`).join(","))];
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\uFEFF" + rows.join("\n")], { type: "text/csv;charset=utf-8;" }));
+  a.download = `AirPulse_운항현황_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+}
+initTimeSelects(); loadData();
+</script>
+</body>
+</html>
