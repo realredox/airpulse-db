@@ -44,13 +44,22 @@ def fetch_and_save():
                     "serviceKey": API_KEY, "searchDate": ymd,
                     "passengerOrCargo": poc_code, "numOfRows": 2500, "pageNo": 1, "type": "json",
                 }
-                res = requests.get(url, params=params, headers=headers, timeout=20, verify=False)
-                res.raise_for_status()
-                data = res.json()
+                for attempt in range(3):
+                    try:
+                        res = requests.get(url, params=params, headers=headers, timeout=40, verify=False)
+                        res.raise_for_status()
+                        data = res.json()
+                        break
+                    except Exception as e:
+                        if attempt == 2:
+                            raise e
+                        import time
+                        time.sleep(3)
 
                 items = data.get("response", {}).get("body", {}).get("items", [])
                 if isinstance(items, dict): items = items.get("item", [])
                 if isinstance(items, dict): items = [items]
+
 
                 for item in items:
                     cs_raw = str(item.get("codeshare") or "").strip()
