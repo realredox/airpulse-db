@@ -18,7 +18,7 @@ def get_date_range():
     # 한국 시간(KST) 기준 -1일 ~ +3일 계산
     kst_now = datetime.utcnow() + timedelta(hours=9)
     dates = []
-    for offset in range(-1, 4):
+    for offset in range(-1, 3):
         target = kst_now + timedelta(days=offset)
         ymd = target.strftime("%Y%m%d")
         md = target.strftime("%m/%d")
