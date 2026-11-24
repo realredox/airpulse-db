@@ -43,7 +43,7 @@
 <div class="card">
   <div class="filter-grid">
     <div class="filter-item"><label>일자 선택</label><select id="selDate" onchange="renderTable()"><option value="전체">전체</option></select></div>
-    <div class="filter-item"><label>항공사 코드</label><div class="airline-row"><input type="text" id="txtAirline" placeholder="예: KE, OZ" onkeyup="renderTable()"><button class="btn-sub" onclick="openAirlineModal()">☑️</button></div></div>
+    <div class="filter-item"><label>항공사 코드</label><div class="airline-row"><input type="text" id="txtAirline" placeholder="예: KE, TK" onkeyup="renderTable()"><button class="btn-sub" onclick="openAirlineModal()">☑️</button></div></div>
     <div class="filter-item"><label>출/도착 구분</label><select id="selIO" onchange="renderTable()"><option value="전체">전체</option><option value="INBOUND">INBOUND</option><option value="OUTBOUND">OUTBOUND</option></select></div>
     <div class="filter-item"><label>여객/화물</label><select id="selType" onchange="renderTable()"><option value="전체">전체</option><option value="여객">여객</option><option value="화물">화물</option></select></div>
     <div class="filter-item"><label>편명 검색</label><input type="text" id="txtFlight" placeholder="예: KE123" onkeyup="renderTable()"></div>
