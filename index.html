@@ -85,14 +85,6 @@
       <label>주기장</label>
       <input type="text" id="f-stand" placeholder="예: 627" oninput="applyFilters()">
     </div>
-    <div class="field">
-      <label>시작 시간</label>
-      <input type="time" id="f-start" onchange="applyFilters()">
-    </div>
-    <div class="field">
-      <label>종료 시간</label>
-      <input type="time" id="f-end" onchange="applyFilters()">
-    </div>
   </div>
   <div class="action-bar">
     <div class="checks">
@@ -166,8 +158,6 @@ async function fetchDB(silent = false) {
     if (IS_FIRST) {
       const todayOpt = dates.find(d => d.startsWith("오늘"));
       if (todayOpt) dateSel.value = todayOpt;
-      const now = new Date();
-      document.getElementById("f-start").value = `${String(now.getHours()).padStart(2, "0")}:00`;
       IS_FIRST = false;
     } else if (dates.includes(prevDate)) {
       dateSel.value = prevDate;
@@ -187,8 +177,6 @@ function applyFilters() {
   const fFlight = document.getElementById("f-flight").value.trim().toUpperCase();
   const fAirport = document.getElementById("f-airport").value.trim().toUpperCase();
   const fStand = document.getElementById("f-stand").value.trim().toUpperCase();
-  const fStart = document.getElementById("f-start").value;
-  const fEnd = document.getElementById("f-end").value;
   const incCS = document.getElementById("f-cs").checked;
   const onlyChg = document.getElementById("f-changed").checked;
 
@@ -202,9 +190,6 @@ function applyFilters() {
     if (fFlight && !(r["편명"] || "").toUpperCase().includes(fFlight)) return false;
     if (fAirport && !`${r["출발지"]} ${r["도착지"]}`.toUpperCase().includes(fAirport)) return false;
     if (fStand && !(r["주기장"] || "").toUpperCase().includes(fStand)) return false;
-    const t = (r["STD/A"] || "").slice(0, 5);
-    if (fStart && t && t < fStart) return false;
-    if (fEnd && t && t > fEnd) return false;
     return true;
   });
 
@@ -255,7 +240,6 @@ function resetToNow() {
   document.getElementById("f-flight").value = "";
   document.getElementById("f-airport").value = "";
   document.getElementById("f-stand").value = "";
-  document.getElementById("f-end").value = "";
   document.getElementById("f-cs").checked = false;
   document.getElementById("f-changed").checked = false;
   IS_FIRST = true;
