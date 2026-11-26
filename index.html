@@ -179,7 +179,6 @@ async function fetchDB(silent = false) {
     if (!silent) document.getElementById("sync-status").textContent = "⚠️ 데이터 수신 지연 (재시도 중)";
   }
 }
-
 function applyFilters() {
   const fDate = document.getElementById("f-date").value;
   const fAirlines = document.getElementById("f-airline").value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
