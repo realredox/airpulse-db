@@ -267,7 +267,7 @@ function renderStandSummary() {
     const st = r["주기장"] || "미배정";
     counts[st] = (counts[st] || 0) + 1;
   });
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 15);
+  const sorted = Object.entries(counts).sort((a, b) => b.at(1) - a.at(1)).slice(0, 15);
   document.getElementById("stand-summary").innerHTML = `<strong style="font-size:12px;color:#00205b;">📍 주기장별 작업량:</strong>` +
     sorted.map(([st, cnt]) => `<span class="stand-chip" onclick="filterByStand('${st === '미배정' ? '' : st}')">${st}번 (${cnt}편)</span>`).join("");
 }
@@ -358,9 +358,8 @@ function openQrModal() {
   const payload = keys.join(",");
   document.getElementById("qr-desc").textContent = `총 ${keys.length}편 선택됨 — AirPulse 앱 [MY JOB → QR 스캔]으로 비춰주세요.`;
   document.getElementById("qr-raw").textContent = payload;
-  const box = document.getElementById("qrcode-box");
-  box.innerHTML = "";
-  new QRCode(box, { text: payload, width: 220, height: 220 });
+  const qrImgUrl = `https://qrserver.com{encodeURIComponent(payload)}`;
+  document.getElementById("qrcode-box").innerHTML = `<img src="${qrImgUrl}" width="230" height="230" alt="MY JOB QR" style="display:block;">`;
   document.getElementById("qr-modal").style.display = "flex";
 }
 
