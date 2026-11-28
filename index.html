@@ -100,8 +100,12 @@
       </select>
     </div>
     <div class="field">
-      <label>편명 / 공항 / 주기장</label>
-      <input type="text" id="f-kw" placeholder="예: 7C101, LAX, 627" oninput="applyFilters()">
+      <label>편명 / 공항 / 등록기호</label>
+      <input type="text" id="f-kw" placeholder="예: 7C101, LAX" oninput="applyFilters()">
+    </div>
+    <div class="field" style="max-width:120px;">
+      <label>주기장</label>
+      <input type="text" id="f-stand" placeholder="예: 101, 627" oninput="applyFilters()">
     </div>
   </div>
 
@@ -221,6 +225,7 @@ function applyFilters() {
   const fType = document.getElementById("f-type").value;
   const fTerm = document.getElementById("f-term").value;
   const fKw = document.getElementById("f-kw").value.trim().toUpperCase();
+  const fStand = document.getElementById("f-stand").value.trim().toUpperCase();
   const incCS = document.getElementById("f-cs").checked;
   const onlyChg = document.getElementById("f-changed").checked;
   const onlyMy = document.getElementById("f-myjob").checked;
@@ -233,7 +238,8 @@ function applyFilters() {
     if (fIO !== "전체" && r["구분"] !== fIO) return false;
     if (fType !== "전체" && r["여객/화물"] !== fType) return false;
     if (fTerm !== "전체" && r["터미널"] !== fTerm) return false;
-    if (fKw && !`${r["편명"]} ${r["출발지"]} ${r["도착지"]} ${r["주기장"]} ${r["등록기호"]}`.toUpperCase().includes(fKw)) return false;
+    if (fKw && !`${r["편명"]} ${r["출발지"]} ${r["도착지"]} ${r["등록기호"]}`.toUpperCase().includes(fKw)) return false;
+    if (fStand && !(r["주기장"] || "").toUpperCase().includes(fStand)) return false;
 
     const ymd = r["일자코드"] || "";
     const hh = fmtHHMM(r["STD/A"]).slice(0, 2);
@@ -261,7 +267,15 @@ function renderStandSummary() {
 }
 
 function filterByStand(st) {
-  document.getElementById("f-kw").value = st;
+  document.getElementById("f-stand").value = st;
+  applyFilters();
+}
+
+function resetFilters() {
+  ["f-airline","f-kw","f-stand"].forEach(id => document.getElementById(id).value = "");
+  ["f-io","f-type","f-term"].forEach(id => document.getElementById(id).value = "전체");
+  ["f-cs","f-changed","f-myjob"].forEach(id => document.getElementById(id).checked = false);
+  setDefault6Hours();
   applyFilters();
 }
 
@@ -366,14 +380,6 @@ function setDefault6Hours() {
   const end = new Date(now.getTime() + 6 * 60 * 60 * 1000);
   document.getElementById("f-to-d").value = `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`;
   document.getElementById("f-to-h").value = pad(end.getHours());
-}
-
-function resetFilters() {
-  ["f-airline","f-kw"].forEach(id => document.getElementById(id).value = "");
-  ["f-io","f-type","f-term"].forEach(id => document.getElementById(id).value = "전체");
-  ["f-cs","f-changed","f-myjob"].forEach(id => document.getElementById(id).checked = false);
-  setDefault6Hours();
-  applyFilters();
 }
 
 function openAirlineModal() {
