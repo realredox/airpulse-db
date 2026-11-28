@@ -126,6 +126,7 @@
       </div>
     </div>
   </div>
+  <div class="stand-summary" id="term-summary"></div>
   <div class="stand-summary" id="stand-summary"></div>
 </div>
 
@@ -261,14 +262,27 @@ function applyFilters() {
 }
 function renderStandSummary() {
   const targetList = VIEW_RECORDS.filter(r => SHEET_JOBS.size ? SHEET_JOBS.has(getRowKey(r)) : true);
-  const counts = {};
+  const termCounts = { "T1": 0, "T2": 0, "화물터미널": 0 };
+  const standCounts = {};
+
   targetList.forEach(r => {
+    const tm = r["터미널"] || "";
+    if (termCounts[tm] !== undefined) termCounts[tm]++;
     const st = r["주기장"] || "미배정";
-    counts[st] = (counts[st] || 0) + 1;
+    standCounts[st] = (standCounts[st] || 0) + 1;
   });
-  const sorted = Object.entries(counts).sort((a, b) => b.at(1) - a.at(1)).slice(0, 15);
-  document.getElementById("stand-summary").innerHTML = `<strong style="font-size:12px;color:#00205b;">📍 주기장별 작업량:</strong>` +
+
+  document.getElementById("term-summary").innerHTML = `<strong style="font-size:12px;color:#00205b;">🏢 터미널별 항공편수:</strong>` +
+    Object.entries(termCounts).map(([tm, cnt]) => `<span class="stand-chip" onclick="filterByTerm('${tm}')">${tm} (${cnt}편)</span>`).join("");
+
+  const sorted = Object.entries(standCounts).sort((a, b) => b.at(1) - a.at(1)).slice(0, 15);
+  document.getElementById("stand-summary").innerHTML = `<strong style="font-size:12px;color:#00205b;">📍 주기장별 항공편수:</strong>` +
     sorted.map(([st, cnt]) => `<span class="stand-chip" onclick="filterByStand('${st === '미배정' ? '' : st}')">${st}번 (${cnt}편)</span>`).join("");
+}
+
+function filterByTerm(tm) {
+  document.getElementById("f-term").value = tm;
+  applyFilters();
 }
 
 function filterByStand(st) {
