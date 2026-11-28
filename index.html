@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AirPulse - 인천공항 실시간 운항 및 작업 관리</title>
+  <title>AirPulse - 인천공항 실시간 출도착 현황</title>
   <script src="https://cloudflare.com"></script>
   <style>
     * { box-sizing: border-box; font-family: 'Malgun Gothic', -apple-system, sans-serif; }
@@ -17,7 +17,9 @@
     .field label { display: block; font-size: 12px; font-weight: bold; color: #475569; margin-bottom: 4px; }
     .field input, .field select { width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
     .airline-row { display: flex; gap: 4px; }
-    .btn { padding: 7px 12px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
+    .btn { padding: 7px 12px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; transition: transform 0.08s ease, filter 0.15s ease, box-shadow 0.15s ease; }
+    .btn:hover { filter: brightness(1.08); box-shadow: 0 3px 8px rgba(0,0,0,0.18); }
+    .btn:active { transform: scale(0.95); filter: brightness(0.9); }
     .btn-primary { background: #00205b; color: #fff; }
     .btn-secondary { background: #e2e8f0; color: #1e293b; }
     .btn-success { background: #0d9488; color: #fff; }
@@ -50,7 +52,7 @@
 </head>
 <body>
 <header>
-  <h1>✈ AirPulse - 인천공항 운항 & 작업 현황 <span class="live-badge">LIVE 30s</span></h1>
+  <h1>✈ AirPulse - 인천공항 실시간 출도착 현황 <span class="live-badge">LIVE 30s</span></h1>
   <div class="sync-box" id="sync-status">📡 실시간 서버 연결 중...</div>
 </header>
 
@@ -393,6 +395,7 @@ function resetFilters() {
   ["f-from-d","f-from-h","f-to-d","f-to-h","f-airline","f-kw"].forEach(id => document.getElementById(id).value = "");
   ["f-io","f-type","f-term"].forEach(id => document.getElementById(id).value = "전체");
   ["f-cs","f-changed","f-myjob"].forEach(id => document.getElementById(id).checked = false);
+  setDefault6Hours();
   applyFilters();
 }
 
