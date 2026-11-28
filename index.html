@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AirPulse - 인천공항 실시간 출도착 현황</title>
-  <script src="https://cloudflare.com"></script>
+  <script src="https://jsdelivr.net"></script>
   <style>
     * { box-sizing: border-box; font-family: 'Malgun Gothic', -apple-system, sans-serif; }
     body { margin: 0; background: #f1f5f9; color: #1e293b; }
@@ -360,8 +360,12 @@ function openQrModal() {
   const payload = keys.join(",");
   document.getElementById("qr-desc").textContent = `총 ${keys.length}편 선택됨 — AirPulse 앱 [MY JOB → QR 스캔]으로 비춰주세요.`;
   document.getElementById("qr-raw").textContent = payload;
-  const qrImgUrl = `https://qrserver.com{encodeURIComponent(payload)}`;
-  document.getElementById("qrcode-box").innerHTML = `<img src="${qrImgUrl}" width="230" height="230" alt="MY JOB QR" style="display:block;">`;
+  document.getElementById("qrcode-box").innerHTML = '<canvas id="qr-canvas"></canvas>';
+  new QRious({
+    element: document.getElementById("qr-canvas"),
+    value: payload,
+    size: 230
+  });
   document.getElementById("qr-modal").style.display = "flex";
 }
 
