@@ -99,26 +99,31 @@
         <option value="화물터미널">화물터미널</option>
       </select>
     </div>
-    <div class="field">
-      <label>편명 / 공항 / 등록기호</label>
-      <input type="text" id="f-kw" placeholder="예: 7C101, LAX" oninput="applyFilters()">
-    </div>
-    <div class="field" style="max-width:120px;">
-      <label>주기장</label>
-      <input type="text" id="f-stand" placeholder="예: 101, 627" oninput="applyFilters()">
-    </div>
   </div>
 
   <div class="action-bar">
-    <div class="checks">
-      <label><input type="checkbox" id="f-cs" onchange="applyFilters()"> 코드쉐어 포함</label>
-      <label style="color:#ea580c;"><input type="checkbox" id="f-changed" onchange="applyFilters()"> 방금변경만</label>
-      <label style="color:#2563eb;"><input type="checkbox" id="f-myjob" onchange="applyFilters()"> MY JOB 배정만</label>
-      <span id="result-count" style="color:#00205b;">조회: 0편</span>
+    <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+      <div class="field" style="width:170px;">
+        <label>편명 / 공항</label>
+        <input type="text" id="f-kw" placeholder="예: 7C101, LAX" oninput="applyFilters()">
+      </div>
+      <div class="field" style="width:120px;">
+        <label>주기장</label>
+        <input type="text" id="f-stand" placeholder="예: 101, 627" oninput="applyFilters()">
+      </div>
     </div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <button class="btn btn-secondary" onclick="resetFilters()">🔄 전체 초기화</button>
-      <button class="btn btn-success" onclick="downloadCSV()">💾 엑셀(CSV)</button>
+
+    <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+      <div class="checks">
+        <label><input type="checkbox" id="f-cs" onchange="applyFilters()"> 코드쉐어 포함</label>
+        <label style="color:#ea580c;"><input type="checkbox" id="f-changed" onchange="applyFilters()"> 방금변경만</label>
+        <label style="color:#2563eb;"><input type="checkbox" id="f-myjob" onchange="applyFilters()"> MY JOB 배정만</label>
+        <span id="result-count" style="color:#00205b;">조회: 0편</span>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary" onclick="resetFilters()">🔄 전체 초기화</button>
+        <button class="btn btn-success" onclick="downloadCSV()">💾 엑셀(CSV)</button>
+      </div>
     </div>
   </div>
   <div class="stand-summary" id="stand-summary"></div>
@@ -238,7 +243,7 @@ function applyFilters() {
     if (fIO !== "전체" && r["구분"] !== fIO) return false;
     if (fType !== "전체" && r["여객/화물"] !== fType) return false;
     if (fTerm !== "전체" && r["터미널"] !== fTerm) return false;
-    if (fKw && !`${r["편명"]} ${r["출발지"]} ${r["도착지"]} ${r["등록기호"]}`.toUpperCase().includes(fKw)) return false;
+    if (fKw && !`${r["편명"]} ${r["출발지"]} ${r["도착지"]}`.toUpperCase().includes(fKw)) return false;
     if (fStand && !(r["주기장"] || "").toUpperCase().includes(fStand)) return false;
 
     const ymd = r["일자코드"] || "";
