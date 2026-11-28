@@ -207,7 +207,8 @@ async function fetchDB(silent = false) {
       const d = (a["일자코드"] || "").localeCompare(b["일자코드"] || "");
       return d !== 0 ? d : (a["STD/A"] || "99:99").localeCompare(b["STD/A"] || "99:99");
     });
-    document.getElementById("sync-status").textContent = `📡 실시간 수집: ${fmtHHMM((data.updated_at || "").split(" ")[1] || data.updated_at)} (30초 자동갱신)`;
+    const timePart = (data.updated_at || "").split(" ").pop();
+    document.getElementById("sync-status").textContent = `📡 실시간 수집: ${fmtHHMM(timePart)} (30초 자동갱신)`;
     applyFilters();
   } catch (e) {
     if (!silent) document.getElementById("sync-status").textContent = "⚠️ 데이터 수신 지연";
