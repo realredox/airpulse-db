@@ -291,7 +291,6 @@ function renderTable() {
     const isIn = r["구분"] === "INBOUND";
     const rowCls = `${isIn ? "row-in" : "row-out"} ${r._changed ? "row-changed" : ""}`;
     const code = (r["항공사코드"] || "").toUpperCase();
-    const logoUrl = `https://daisycon.io{code}`;
     const st = r["현황"] || "";
     const stBadge = (st.includes("지연") || st.includes("결항")) ? `<span class="badge-delay">${st}</span>`
                   : (st === "출발" || st === "도착") ? `<span class="badge-done">${st}</span>` : st;
@@ -301,7 +300,7 @@ function renderTable() {
     return `<tr class="${rowCls}">
       <td><input type="checkbox" ${isChecked ? "checked" : ""} onchange="toggleRow('${rKey}', this.checked)"></td>
       <td>${r["일자"] || "-"}</td>
-      <td><span class="al-cell"><img class="al-logo" src="${logoUrl}" onerror="this.style.display='none'"><strong>${code}</strong> ${r["항공사명"] || ""}</span></td>
+      <td><strong>${code}</strong> ${r["항공사명"] || ""}</td>
       <td><strong>${r["편명"] || "-"}</strong>${r._changed ? '<span class="badge-chg">변경</span>' : ''}</td>
       <td><strong>${isIn ? "IN/B" : "OUT/B"}</strong></td>
       <td>${r["여객/화물"] || "-"}</td>
