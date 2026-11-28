@@ -374,6 +374,22 @@ function initHourSelects() {
   document.getElementById("f-to-h").innerHTML = opts.join("");
 }
 
+function setDefault6Hours() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  const fromD = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const fromH = pad(now.getHours());
+
+  const end = new Date(now.getTime() + 6 * 60 * 60 * 1000);
+  const toD = `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`;
+  const toH = pad(end.getHours());
+
+  document.getElementById("f-from-d").value = fromD;
+  document.getElementById("f-from-h").value = fromH;
+  document.getElementById("f-to-d").value = toD;
+  document.getElementById("f-to-h").value = toH;
+}
+
 function resetFilters() {
   ["f-from-d","f-from-h","f-to-d","f-to-h","f-airline","f-kw"].forEach(id => document.getElementById(id).value = "");
   ["f-io","f-type","f-term"].forEach(id => document.getElementById(id).value = "전체");
@@ -408,6 +424,7 @@ function downloadCSV() {
 
 window.addEventListener("DOMContentLoaded", () => {
   initHourSelects();
+  setDefault6Hours();
   fetchDB();
   setInterval(() => fetchDB(true), 30000);
 });
